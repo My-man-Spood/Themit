@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <style>
+            #highlighter {
+                position: fixed;
+                border: 1px dotted grey;
+                transition: all 0.1s ease; /* Add a transition for smooth animation */
+                pointer-events: none; /* Allows clicks to go through the highlighter */
+                display: none; /* Initially hide the highlighter */
+            }
+
+            .card {
+                width: 300px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                padding: 10px;
+                margin-bottom: 10px;
+            }
+
+            .card img {
+                width: 100%;
+                height: auto;
+                border-radius: 5px;
+            }
+
+            .card h2 {
+                margin-top: 10px;
+                font-size: 18px;
+            }
+
+            .card p {
+                margin-top: 5px;
+                font-size: 14px;
+            }
+        </style>
+        <title>Element Highlighter</title>
+    </head>
+    <body>
+        <div class="card">
+            <img src="https://via.placeholder.com/300" alt="Placeholder Image" />
+            <h2>Card Title</h2>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+        </div>
+
+        <div id="highlighter"></div>
+
+        <script>
+            // Function to update the position of the highlighter div
+            function updateHighlighterPosition(element) {
+                var highlighter = document.getElementById('highlighter');
+                var rect = element.getBoundingClientRect();
+                highlighter.style.width = rect.width + 'px';
+                highlighter.style.height = rect.height + 'px';
+                highlighter.style.left = rect.left + window.pageXOffset + 'px';
+                highlighter.style.top = rect.top + window.pageYOffset + 'px';
+                highlighter.style.display = 'block';
+            }
+
+            // Function to handle the mouseover event
+            function handleMouseOver(event) {
+                var targetElement = event.target;
+                updateHighlighterPosition(targetElement);
+            }
+
+            // Function to handle the click event
+            function handleClick(event) {
+                var clickedElement = event.target;
+                console.log('Element properties:', clickedElement);
+                // You can add more logic here to display or manipulate the properties
+            }
+
+            // Attach event listeners to the document
+            document.addEventListener('mouseover', handleMouseOver);
+            document.addEventListener('click', handleClick);
+        </script>
+
+        <!-- Your HTML content goes here -->
+    </body>
+</html>
