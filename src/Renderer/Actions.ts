@@ -1,0 +1,1 @@
+export const TH_DOCUMENT_LOADED = 'DOCUMENT_LOADED';

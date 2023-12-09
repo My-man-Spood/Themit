@@ -1,0 +1,30 @@
+<div id="highlighter"></div>
+<script>
+    // Function to update the position of the highlighter div
+    function updateHighlighterPosition(element) {
+        var highlighter = document.getElementById('highlighter');
+        var rect = element.getBoundingClientRect();
+        highlighter.style.width = rect.width + 'px';
+        highlighter.style.height = rect.height + 'px';
+        highlighter.style.left = rect.left + window.pageXOffset + 'px';
+        highlighter.style.top = rect.top + window.pageYOffset + 'px';
+        highlighter.style.display = 'block';
+    }
+
+    // Function to handle the mouseover event
+    function handleMouseOver(event) {
+        var targetElement = event.target;
+        updateHighlighterPosition(targetElement);
+    }
+
+    // Function to handle the click event
+    function handleClick(event) {
+        var clickedElement = event.target;
+        console.log('Element properties:', clickedElement);
+        // You can add more logic here to display or manipulate the properties
+    }
+
+    // Attach event listeners to the document
+    document.addEventListener('mouseover', handleMouseOver);
+    document.addEventListener('click', handleClick);
+</script>

@@ -1,0 +1,20 @@
+#hierarchy {
+    .node {
+        font-size: 1rem;
+
+        .node {
+            padding-left: 10px;
+            border-left: 2px solid #424242;
+        }
+
+        .classes {
+            font-size: 0.8rem;
+            color: darken(white, 20%);
+        }
+
+        .id {
+            font-size: 0.8rem;
+            color: #a19989;
+        }
+    }
+}

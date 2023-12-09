@@ -1,14 +1,18 @@
-{ 
+{
   "compilerOptions": {
-    "target": "es5",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "target": "es6",
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
     "sourceMap": true,
+    "allowUnreachableCode": false,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "removeComments": false,
     "noImplicitAny": false,
-    "outDir": "dist"
+    "outDir": "./dist/App",
   },
+  "include": [
+    "src/App/*.ts"
+  ],
   "exclude": [ "node_modules" ] 
 }

@@ -3,19 +3,38 @@
     "version": "1.0.0",
     "product": "themit",
     "description": "",
-    "main": "dist/app.js",
+    "main": "dist/App/app.js",
     "scripts": {
-        "build": "tsc",
+        "go": "npm run build && electron dist/App/app.js",
+        "build": "npm run build-renderer && npm run build-app",
+        "build-renderer": "webpack --config-name Renderer",
+        "watch-renderer": "webpack --config-name Renderer --watch",
+        "build-app": "tsc",
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "electron dist/app.js"
+        "start": "electronmon dist/App/app.js"
     },
     "author": "spood",
     "license": "MIT",
     "dependencies": {
-        "electron": "^27.1.0"
+        "cheerio": "^1.0.0-rc.12",
+        "css-loader": "^6.8.1",
+        "electron": "^27.1.0",
+        "htmlparser2": "^9.0.0",
+        "rxjs": "^7.8.1",
+        "style-loader": "^3.3.3"
     },
     "devDependencies": {
         "@types/electron": "^1.6.10",
-        "typescript": "^5.3.2"
+        "@types/uuid": "^9.0.7",
+        "copy-webpack-plugin": "^11.0.0",
+        "electronmon": "^2.0.2",
+        "html-webpack-plugin": "^5.5.3",
+        "sass": "^1.69.5",
+        "sass-loader": "^13.3.2",
+        "ts-loader": "^9.5.1",
+        "typescript": "^5.3.2",
+        "uuid": "^9.0.1",
+        "webpack": "^5.89.0",
+        "webpack-cli": "^5.1.4"
     }
 }
