@@ -7,33 +7,63 @@ export class Hierarchy {
     private element: HTMLElement;
 
     constructor(private bus: Bus) {
-        this.element = document.getElementById('hierarchy')!;
+        this.element = document.getElementById('hierarchy-content')!;
 
         this.bus.on(TH_DOCUMENT_LOADED).subscribe((action) => {
             this.scaffoldFile(action.payload);
         });
     }
 
+    private nodeOpenTemplate = `
+    <div class="node"> 
+        <p class="node-name" data-th="{{thid}}">{{name}}{{id}}{{classes}}</p>
+        <ul class="node-children">
+    `;
+
+    private nodeCloseTemplate = `
+    </ul>
+    </div>
+    `;
+
     public scaffoldFile(file: FileHolder): void {
         let html = '<div class="node-list">';
         let depth = 0;
+        let currentDepth = 0;
+
         const parser = new Parser({
             onopentag: (name, attribs) => {
-                html += `<div class="node" data-th="${attribs['data-th']}">${name}`;
+                currentDepth++;
+                let temp = '';
+                if (depth === currentDepth) html += this.nodeCloseTemplate;
+
+                temp += this.nodeOpenTemplate;
+                temp = temp.replace('{{name}}', name);
+                temp = temp.replace('{{thid}}', attribs['data-th']);
+
                 let idText = this.parseId(attribs['id']);
                 let classText = this.parseClasses(attribs['class']);
                 if (attribs['id']) {
-                    html += `&nbsp;<span class="id">${idText}</span>`;
+                    temp = temp.replace('{{id}}', '&nbsp;' + idText);
+                } else {
+                    temp = temp.replace('{{id}}', '');
                 }
                 if (attribs['class']) {
-                    html += `&nbsp;<span class="classes">${classText}</span>`;
+                    temp = temp.replace('{{classes}}', '&nbsp;' + classText);
+                } else {
+                    temp = temp.replace('{{classes}}', '');
                 }
+
+                html += temp;
+                console.log('open tag: ', temp);
+                depth = currentDepth;
             },
-            ontext: (text) => {
-                console.log(text);
-            },
+            ontext: (text) => {},
             onclosetag: (tagname) => {
-                html += `</div>`;
+                if (depth === 0) {
+                    html += `</div>`;
+                }
+
+                currentDepth--;
             },
         });
         parser.write(file.asHTML());
@@ -45,7 +75,7 @@ export class Hierarchy {
     private parseId(idString: string): string {
         if (!idString) return '';
 
-        return `#<span class="id">${idString}</span> `;
+        return `<span class="id">#${idString}</span> `;
     }
 
     private parseClasses(classesString: string): string {

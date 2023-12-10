@@ -1,6 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import { FSObject } from '../lib/FSObject';
+import { THProject } from '../lib/THProject';
 
 contextBridge.exposeInMainWorld('electron', {
-    loadDocument: (path: string) => ipcRenderer.invoke('loadDocument', path),
-    loadDirectory: (path: string) => ipcRenderer.invoke('loadDirectory', path),
+    loadProject: (): Promise<THProject> => ipcRenderer.invoke('loadProject'),
+    loadDocument: (path: string): Promise<string> => ipcRenderer.invoke('loadDocument', path),
+    readDirectory: (path: string): Promise<FSObject[]> => ipcRenderer.invoke('readDirectory', path),
 });

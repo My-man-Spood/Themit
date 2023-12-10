@@ -1,0 +1,32 @@
+@import 'variables';
+
+#file-browser {
+    #file-browser-path {
+        margin: 0;
+        font-size: 1rem;
+        color: $th-text-faded;
+    }
+
+    #file-browser-content {
+        .node {
+            color: $th-text-default;
+            font-size: 1rem;
+
+            &.faded {
+                color: $th-text-faded;
+            }
+
+            .node {
+                padding-left: 10px;
+                border-left: 2px solid #424242;
+
+                &:not(.faded) {
+                    &:hover {
+                        background-color: #424242;
+                        cursor: pointer;
+                    }
+                }
+            }
+        }
+    }
+}

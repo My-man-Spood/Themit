@@ -1,5 +1,6 @@
 import { BrowserWindow, ipcMain } from 'electron';
 import { FSObject } from '../lib/FSObject';
+import { THProject as THProject } from '../lib/THProject';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -36,6 +37,14 @@ export default class Main {
             return Main.ReadFile(path);
         });
 
+        ipcMain.handle('readDirectory', (event, path) => {
+            return Main.readDirectory(path);
+        });
+
+        ipcMain.handle('loadProject', (event) => {
+            return Main.loadProject();
+        });
+
         Main.mainWindow = new Main.BrowserWindow({
             width: 800,
             height: 600,
@@ -49,11 +58,13 @@ export default class Main {
     }
 
     private static ReadFile(filepath: string): Promise<string> {
+        filepath = Main.unabstractPath(filepath);
+
         return new Promise<string>((resolve, reject) => {
             var fullpath = path.join(__dirname, Main.projectDir, filepath);
             console.log(fullpath);
 
-            fs.readFile(path.join(__dirname, Main.projectDir, filepath), 'utf8', (err, data) => {
+            fs.readFile(filepath, 'utf8', (err, data) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -63,21 +74,28 @@ export default class Main {
         });
     }
 
-    private static readDirectoryRecursive(dir: string): Promise<FSObject[]> {
+    private static readDirectory(dir: string, rewritePath: boolean = true): Promise<FSObject[]> {
+        const fullPath = dir.replace('res://', path.join(__dirname, Main.projectDir));
+        const abstractPath = dir.replace(path.join(__dirname, Main.projectDir), 'res://');
+
+        console.log(path.join(abstractPath, 'swag'));
         return new Promise<FSObject[]>((resolve, reject) => {
-            fs.readdir(dir, { withFileTypes: true }, (err, files) => {
+            fs.readdir(fullPath, { withFileTypes: true }, (err, files) => {
                 if (err) {
                     reject(err);
                 } else {
                     Promise.all(
                         files.map((f) => {
-                            if (f.isDirectory()) {
-                                return Main.readDirectoryRecursive(path.join(dir, f.name)).then((children) => {
-                                    return new FSObject(f.name, path.join(dir, f.name), true, children);
-                                });
-                            } else {
-                                return Promise.resolve(new FSObject(f.name, path.join(dir, f.name), false, []));
-                            }
+                            var filepath = path.join(fullPath, f.name);
+
+                            return Promise.resolve(
+                                new FSObject(
+                                    f.name,
+                                    rewritePath ? Main.abstractPath(filepath) : filepath,
+                                    f.isDirectory(),
+                                    []
+                                )
+                            );
                         })
                     ).then((children) => {
                         resolve(children);
@@ -87,19 +105,25 @@ export default class Main {
         });
     }
 
-    private static readDirectory(dir: string): Promise<FSObject[]> {
-        return new Promise<FSObject[]>((resolve, reject) => {
-            fs.readdir(dir, { withFileTypes: true }, (err, files) => {
+    private static abstractPath(filepath: string): string {
+        return filepath.replace(path.join(__dirname, Main.projectDir) + '\\', 'res://');
+    }
+
+    private static unabstractPath(filepath: string): string {
+        return filepath.replace('res://', path.join(__dirname, Main.projectDir) + '\\');
+    }
+
+    private static loadProject(): Promise<THProject> {
+        return new Promise<THProject>((resolve, reject) => {
+            fs.readFile(path.join(__dirname, Main.projectDir, 'thproject.json'), 'utf8', (err, data) => {
                 if (err) {
                     reject(err);
                 } else {
-                    Promise.all(
-                        files.map((f) => {
-                            return Promise.resolve(new FSObject(f.name, path.join(dir, f.name), f.isDirectory(), []));
-                        })
-                    ).then((children) => {
-                        resolve(children);
-                    });
+                    //TODO: Parse project settings quand yaura des settings
+                    const proj = new THProject();
+                    proj.rootDir = path.join(__dirname, Main.projectDir);
+
+                    resolve(proj);
                 }
             });
         });

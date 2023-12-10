@@ -8,18 +8,36 @@
     <body>
         <div class="container">
             <div class="left">
-                <div id="hierarchy"></div>
-                <div id="browser">
-                    <a href="#">load file</a>
+                <div id="hierarchy" class="editor-window">
+                    <div id="hierarchy-header" class="editor-window-header">
+                        <h3>Hierarchy</h3>
+                    </div>
+                    <div id="hierarchy-content" class="editor-window-content"></div>
+                </div>
+                <div id="file-browser" class="editor-window">
+                    <div id="file-browser-header" class="editor-window-header">
+                        <h3>File Browser</h3>
+                    </div>
+                    <div class="editor-window-content">
+                        <div id="file-browser-content"></div>
+                    </div>
                 </div>
             </div>
             <div class="center">
                 <div id="viewport"></div>
-                <div id="console"></div>
+                <div id="console" class="editor-window">
+                    <div id="console-header" class="editor-window-header">
+                        <h3>Console</h3>
+                    </div>
+                    <div id="console-content" class="editor-window-content"></div>
+                </div>
             </div>
             <div class="right">
-                <div id="inspector">
-                    <ul></ul>
+                <div id="inspector" class="editor-window">
+                    <div id="inspector-header" class="editor-window-header">
+                        <h3>Inspector</h3>
+                    </div>
+                    <div id="inspector-content" class="editor-window-content"></div>
                 </div>
             </div>
         </div>

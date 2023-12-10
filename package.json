@@ -9,6 +9,7 @@
         "build": "npm run build-renderer && npm run build-app",
         "build-renderer": "webpack --config-name Renderer",
         "watch-renderer": "webpack --config-name Renderer --watch",
+        "watch-app": "tsc --watch",
         "build-app": "tsc",
         "test": "echo \"Error: no test specified\" && exit 1",
         "start": "electronmon dist/App/app.js"
