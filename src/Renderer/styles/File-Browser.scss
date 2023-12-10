@@ -15,7 +15,11 @@
             &.faded {
                 color: $th-text-faded;
             }
-
+            img {
+                height: 1em;
+                vertical-align: middle;
+                margin-right: 5px;
+            }
             .node {
                 padding-left: 10px;
                 border-left: 2px solid #424242;

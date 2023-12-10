@@ -1,36 +1,20 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
+import { Configuration } from 'webpack';
 
-module.exports = [
-    {
-        name: 'App',
-        entry: './src/App/app.ts',
-        mode: 'development',
-        devtool: 'inline-source-map',
-        module: {
-            rules: [
-                {
-                    test: /\.tsx?$/,
-                    use: 'ts-loader',
-                    exclude: /node_modules/,
-                },
-            ],
-        },
-        resolve: {
-            extensions: ['.tsx', '.ts', '.js'],
-        },
-        output: {
-            filename: 'bundle_[contenthash].js',
-            path: path.resolve(__dirname, 'dist/App'),
-            clean: true,
-        },
-    },
-    {
-        name: 'Renderer',
-        entry: './src/Renderer/Renderer.ts',
-        mode: 'development',
-        devtool: 'inline-source-map',
+export const WebpackBuildConfig = (
+    projectDir: string,
+    env: 'development' | 'none' | 'production' = 'development'
+): Configuration => {
+    let projectSrc = path.join(projectDir, 'src');
+    let projectDist = path.join(projectDir, 'dist');
+
+    return {
+        name: 'Project',
+        entry: path.join(projectSrc, 'app.ts'),
+        mode: env,
+        devtool: env == 'development' ? 'inline-source-map' : 'none',
         module: {
             rules: [
                 {
@@ -55,17 +39,17 @@ module.exports = [
             extensions: ['.tsx', '.ts', '.js'],
         },
         output: {
+            path: projectDist,
             filename: 'bundle_[contenthash].js',
-            path: path.resolve(__dirname, 'dist/Renderer'),
             clean: true,
         },
         plugins: [
             new HtmlWebpackPlugin({
-                template: './src/Renderer/index.html',
+                template: path.join(projectSrc, 'index.html'),
             }),
             new CopyPlugin({
-                patterns: [{ from: './src/Renderer/assets', to: 'assets' }],
+                patterns: [{ from: path.join(projectSrc, 'assets'), to: 'assets' }],
             }),
         ],
-    },
-];
+    };
+};

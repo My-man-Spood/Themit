@@ -1,14 +1,18 @@
 import { BrowserWindow, ipcMain } from 'electron';
 import { FSObject } from '../lib/FSObject';
 import { THProject as THProject } from '../lib/THProject';
+import * as Webpack from 'webpack';
 import * as path from 'path';
 import * as fs from 'fs';
+import { WebpackBuildConfig } from './webpackbuildconf';
 
 export default class Main {
     static mainWindow: Electron.BrowserWindow;
     static application: Electron.App;
     static BrowserWindow;
     static projectDir = '../../.project';
+    static projectRoot = '../../.project';
+    static projectSrc = '../../.project/src';
 
     static main(app: Electron.App, browserWindow: typeof BrowserWindow) {
         // we pass the Electron.App object and the
@@ -45,9 +49,20 @@ export default class Main {
             return Main.loadProject();
         });
 
+        ipcMain.handle('buildProject', (event) => {
+            return Main.buildProject();
+        });
+
         Main.mainWindow = new Main.BrowserWindow({
-            width: 800,
-            height: 600,
+            frame: false,
+            titleBarStyle: 'hidden',
+            titleBarOverlay: {
+                color: '#212121',
+                symbolColor: '#cccccc',
+                height: 35,
+            },
+            width: 1024,
+            height: 768,
             webPreferences: {
                 preload: path.join(__dirname, 'preload.js'),
             },
@@ -75,8 +90,8 @@ export default class Main {
     }
 
     private static readDirectory(dir: string, rewritePath: boolean = true): Promise<FSObject[]> {
-        const fullPath = dir.replace('res://', path.join(__dirname, Main.projectDir));
-        const abstractPath = dir.replace(path.join(__dirname, Main.projectDir), 'res://');
+        const fullPath = Main.unabstractPath(dir);
+        const abstractPath = Main.abstractPath(dir);
 
         console.log(path.join(abstractPath, 'swag'));
         return new Promise<FSObject[]>((resolve, reject) => {
@@ -87,7 +102,6 @@ export default class Main {
                     Promise.all(
                         files.map((f) => {
                             var filepath = path.join(fullPath, f.name);
-
                             return Promise.resolve(
                                 new FSObject(
                                     f.name,
@@ -106,11 +120,11 @@ export default class Main {
     }
 
     private static abstractPath(filepath: string): string {
-        return filepath.replace(path.join(__dirname, Main.projectDir) + '\\', 'res://');
+        return filepath.replace(path.join(__dirname, Main.projectSrc) + '\\', 'src://');
     }
 
     private static unabstractPath(filepath: string): string {
-        return filepath.replace('res://', path.join(__dirname, Main.projectDir) + '\\');
+        return filepath.replace('src://', path.join(__dirname, Main.projectSrc) + '\\');
     }
 
     private static loadProject(): Promise<THProject> {
@@ -124,6 +138,22 @@ export default class Main {
                     proj.rootDir = path.join(__dirname, Main.projectDir);
 
                     resolve(proj);
+                }
+            });
+        });
+    }
+
+    private static buildProject(): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            let config = WebpackBuildConfig(path.join(__dirname, Main.projectDir), 'development');
+            console.log(config);
+            Webpack.webpack(config, (err, stats) => {
+                if (err) {
+                    console.log(err);
+                    reject(err);
+                } else {
+                    console.log('build done');
+                    resolve();
                 }
             });
         });

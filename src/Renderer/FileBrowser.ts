@@ -1,11 +1,9 @@
 import { FSObject } from '../lib/FSObject';
-import { THProject } from '../lib/THProject';
 import { TH_READ_FILE_REQUEST, TH_PROJECT_LOADED } from './Actions';
 import { Action, Bus } from './Bus';
 import { FSLink } from './FSLink';
 
 export class FileBrowser {
-    private rootDir: string;
     private files: FSObject[] = [];
     private element: HTMLElement;
 
@@ -13,24 +11,24 @@ export class FileBrowser {
         this.element = document.getElementById('file-browser-content')!;
 
         this.bus.on(TH_PROJECT_LOADED).subscribe((action: Action) => {
-            this.rootDir = action.payload.rootDir;
-            this.readDirectory('res://');
+            this.readDirectory('src://');
         });
     }
 
     private readDirectory(path: string): void {
         this.fs.readDir(path).then((files) => {
-            this.files = files;
+            this.files = files.map((f) => new FSObject(f.name, f.path, f.isDirectory, f.children));
             this.redraw();
         });
     }
 
     private redraw(): void {
-        let html = '<div class="node faded" data-path="res://">res://';
+        let html = '<div class="node faded" data-path="src://">src://';
 
-        this.files.forEach((f) => {
-            console.log(f.path);
-            html += `<div class="node" data-path="${f.path}">${f.name}</div>`;
+        this.files.forEach((f: FSObject) => {
+            let icon = f.isDirectory ? 'default_folder.svg' : f.ext ? `file_type_${f.ext}.svg` : 'default_file.svg';
+
+            html += `<div class="node" data-path="${f.path}"><img src="assets/icons/${icon}"/>${f.name}</div>`;
         });
 
         html += '</div>';

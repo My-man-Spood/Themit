@@ -10,10 +10,63 @@ body {
     line-height: 1.5;
     color: white;
 
+    #toolbar {
+        height: 35px;
+        width: 100%;
+        box-sizing: border-box;
+        color: $th-text-faded;
+        background-color: #212121;
+
+        .flex {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: start;
+            height: 100%;
+            width: 100%;
+
+            .title {
+                font-weight: bold;
+                color: $th-text-special;
+            }
+            .spacer {
+                width: 10px;
+            }
+
+            #menu {
+                list-style: none;
+                height: 100%;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: start;
+                padding: 0;
+
+                li {
+                    margin: 0 5px;
+                    padding: 0 5px;
+                    box-sizing: border-box;
+                    font-size: 0.8rem;
+
+                    &:hover {
+                        cursor: pointer;
+                        background-color: $th-bg-light;
+                    }
+                }
+            }
+
+            #drag-region {
+                height: 100%;
+                -webkit-app-region: drag;
+                flex: 1;
+            }
+        }
+    }
+
     .container {
         display: flex;
         flex-direction: row;
-        height: 100%;
+        height: calc(100% - 35px);
 
         .left {
             height: 100%;
@@ -61,8 +114,10 @@ body {
 
 .editor-window {
     box-sizing: border-box;
-    background-color: #212121;
-    border: 1px solid #424242;
+    background-color: $th-bg;
+    border: 1px solid $th-border;
+    display: flex;
+    flex-direction: column;
 
     .editor-window-header {
         h3 {
@@ -71,13 +126,17 @@ body {
             color: $th-text-faded;
         }
 
-        border-bottom: #424242 1px solid;
+        background-color: $th-bg-dark;
+        border-bottom: $th-border 1px solid;
         padding-left: 10px;
     }
 
     .editor-window-content {
+        flex: 1;
         padding: 10px;
+        padding-top: 5px;
         overflow-y: auto;
+        background-color: $th-bg;
     }
 }
 

@@ -5,4 +5,9 @@ runEditor();
 
 function runEditor() {
     const editor = new Editor();
+    document.getElementById('build')?.addEventListener('click', () => {
+        window['electron'].buildProject().then(() => {
+            alert('Build complete!');
+        });
+    });
 }
