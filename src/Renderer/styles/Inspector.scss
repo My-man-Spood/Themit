@@ -52,6 +52,68 @@
         }
     }
 
+    // Stylesheet rules styling
+    .stylesheet-rules {
+        height: 100%;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 12px;
+        
+        .rules-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .stylesheet-container {
+            border: 1px solid #424242;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .stylesheet-header {
+            background-color: #333;
+            color: #e0e0e0;
+            padding: 6px 10px;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        
+        .rule-container {
+            padding: 8px;
+        }
+        
+        .rule-selector {
+            color: #9cdcfe;
+            margin-bottom: 4px;
+        }
+        
+        .rule-declarations {
+            padding-left: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .declaration {
+            color: #d4d4d4;
+            
+            .declaration-name {
+                color: #9cdcfe;
+            }
+            
+            .declaration-value {
+                color: #ce9178;
+            }
+        }
+        
+        .no-rules {
+            color: #a0a0a0;
+            text-align: center;
+            padding: 20px;
+        }
+    }
+
     #inspector-canvas {
         width: 100%;
         height: 200px;

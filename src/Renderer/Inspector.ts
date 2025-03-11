@@ -8,6 +8,7 @@ export class Inspector {
     private ctx: CanvasRenderingContext2D;
     private selectedElement: HTMLElement | null = null;
     private cssPropertiesContainer: HTMLElement;
+    private stylesheetsContainer: HTMLElement;
     private categoryElements: { [key: string]: HTMLElement } = {};
     private tabsContainer: HTMLElement;
     private tabContents: { [key: string]: HTMLElement } = {};
@@ -18,6 +19,7 @@ export class Inspector {
         this.canvas = document.getElementById('inspector-canvas') as HTMLCanvasElement;
         this.ctx = this.canvas.getContext('2d')!;
         this.cssPropertiesContainer = document.getElementById('css-properties')!;
+        this.stylesheetsContainer = document.getElementById('stylesheets-tab')!;
         this.tabsContainer = document.getElementById('inspector-tabs')!;
         
         // Initialize tab contents
@@ -45,8 +47,45 @@ export class Inspector {
         
         // Subscribe to node selection events
         this.bus.on(TH_NODE_SELECTED).subscribe((action) => {
-            this.selectedElement = action.payload.element;
-            this.displayCSSInfo(this.selectedElement!);
+            // Get the selected node from the hierarchy
+            const selectedNode = action.payload.element;
+            
+            // Find the actual HTML element in the document using the data-th attribute
+            const thId = selectedNode.getAttribute('data-th');
+            if (thId) {
+                // Find the viewport element that contains the rendered content
+                const viewport = document.getElementById('viewport');
+                if (viewport) {
+                    // Find the element with matching data-th in the viewport
+                    this.selectedElement = viewport.querySelector(`[data-th="${thId}"]`) as HTMLElement;
+                    if (this.selectedElement) {
+                        this.displayCSSInfo(this.selectedElement);
+                        this.displayStylesheetRules(this.selectedElement);
+                    } else {
+                        console.warn(`Could not find element with data-th: ${thId} in viewport`);
+                        this.clearInspector();
+                        
+                        // Display a message in the stylesheets tab
+                        if (this.stylesheetsContainer) {
+                            this.stylesheetsContainer.innerHTML = '';
+                            const noElement = document.createElement('div');
+                            noElement.className = 'no-rules';
+                            noElement.textContent = 'Element not found in the document.';
+                            this.stylesheetsContainer.appendChild(noElement);
+                        }
+                    }
+                } else {
+                    console.warn('No viewport element found');
+                    this.clearInspector();
+                }
+            } else {
+                // If no data-th is found, use the element directly (fallback)
+                this.selectedElement = selectedNode;
+                if (this.selectedElement) {
+                    this.displayCSSInfo(this.selectedElement);
+                    this.displayStylesheetRules(this.selectedElement);
+                }
+            }
         });
     }
     
@@ -78,9 +117,13 @@ export class Inspector {
         
         // Add active class to selected tab and content
         const selectedTab = this.tabsContainer.querySelector(`[data-tab="${tabName}"]`);
-        selectedTab?.classList.add('active');
+        if (selectedTab) {
+            selectedTab.classList.add('active');
+        }
         
-        this.tabContents[tabName].classList.add('active');
+        if (this.tabContents[tabName]) {
+            this.tabContents[tabName].classList.add('active');
+        }
         
         // If switching to the computed tab and we have a selected element, redraw
         if (tabName === 'computed' && this.selectedElement) {
@@ -100,192 +143,431 @@ export class Inspector {
     }
     
     private displayCSSInfo(element: HTMLElement): void {
-        // Clear the inspector content first
+        // Clear previous info
         this.clearInspector();
         
-        if (!element) return;
-        
-        // Get computed styles
+        // Get computed style directly from the document
         const computedStyle = window.getComputedStyle(element);
         
-        // Important CSS categories to display with their properties
-        const cssCategories = [
-            { title: 'Box Model', properties: ['width', 'height', 'padding', 'margin', 'border'] },
-            { title: 'Position', properties: ['position', 'top', 'right', 'bottom', 'left', 'z-index'] },
-            { title: 'Typography', properties: ['font-family', 'font-size', 'font-weight', 'line-height', 'color', 'text-align'] },
-            { title: 'Background', properties: ['background-color', 'background-image', 'background-position', 'background-size'] },
-            { title: 'Display', properties: ['display', 'visibility', 'opacity', 'overflow'] },
-            { title: 'Flexbox', properties: ['flex-direction', 'justify-content', 'align-items', 'flex-wrap'] }
-        ];
+        // Define property categories
+        const categories: { [key: string]: string[] } = {
+            'Box Model': [
+                'width', 'height', 'padding', 'padding-top', 'padding-right', 
+                'padding-bottom', 'padding-left', 'margin', 'margin-top', 
+                'margin-right', 'margin-bottom', 'margin-left', 'box-sizing'
+            ],
+            'Position': [
+                'position', 'top', 'right', 'bottom', 'left', 'z-index'
+            ],
+            'Typography': [
+                'font-family', 'font-size', 'font-weight', 'line-height', 
+                'text-align', 'color', 'text-decoration'
+            ],
+            'Background': [
+                'background', 'background-color', 'background-image', 
+                'background-position', 'background-size', 'background-repeat'
+            ],
+            'Display': [
+                'display', 'visibility', 'opacity', 'overflow'
+            ],
+            'Flexbox': [
+                'flex', 'flex-direction', 'flex-wrap', 'justify-content', 
+                'align-items', 'align-content', 'gap'
+            ]
+        };
         
-        // Populate each category with properties
-        cssCategories.forEach(category => {
-            const categoryElement = this.categoryElements[category.title];
-            if (!categoryElement) return;
+        // Populate each category
+        Object.entries(categories).forEach(([category, properties]) => {
+            const categoryElement = this.categoryElements[category];
             
-            // Clear previous properties
-            categoryElement.innerHTML = '';
-            
-            // Add each property in this category
-            category.properties.forEach(prop => {
+            properties.forEach(prop => {
                 const value = computedStyle.getPropertyValue(prop);
+                
                 if (value) {
                     const propertyItem = document.createElement('div');
                     propertyItem.className = 'property-item';
                     
-                    const propName = document.createElement('span');
+                    const propName = document.createElement('div');
                     propName.className = 'property-name';
-                    propName.textContent = prop + ':';
+                    propName.textContent = prop;
                     
-                    const propValue = document.createElement('span');
+                    const propValue = document.createElement('div');
                     propValue.className = 'property-value';
                     propValue.textContent = value;
                     
                     propertyItem.appendChild(propName);
                     propertyItem.appendChild(propValue);
-                    categoryElement.appendChild(propertyItem);
+                    if (categoryElement) {
+                        categoryElement.appendChild(propertyItem);
+                    }
                 }
             });
         });
         
-        // Draw box model visualization on canvas
+        // Draw box model visualization
         this.drawBoxModel(element, computedStyle);
+    }
+    
+    private displayStylesheetRules(element: HTMLElement): void {
+        // Clear previous stylesheet info
+        if (this.stylesheetsContainer) {
+            this.stylesheetsContainer.innerHTML = '';
+            this.stylesheetsContainer.className = 'stylesheet-rules';
+        }
+        
+        // Create a container for the stylesheet rules
+        const rulesContainer = document.createElement('div');
+        rulesContainer.className = 'rules-container';
+        
+        // Get all stylesheets from the document
+        const stylesheets = Array.from(document.styleSheets);
+        
+        // Track if we found any rules
+        let foundRules = false;
+        
+        // Process each stylesheet
+        stylesheets.forEach(stylesheet => {
+            try {
+                // Get all CSS rules from the stylesheet
+                const cssRules = Array.from(stylesheet.cssRules || stylesheet.rules || []);
+                
+                // Create a container for this stylesheet's rules
+                const stylesheetContainer = document.createElement('div');
+                stylesheetContainer.className = 'stylesheet-container';
+                
+                // Track if we found any matching rules in this stylesheet
+                let foundInStylesheet = false;
+                
+                // Add stylesheet information header
+                const stylesheetHeader = document.createElement('div');
+                stylesheetHeader.className = 'stylesheet-header';
+                
+                // Get the stylesheet source
+                let source = 'inline';
+                if (stylesheet.href) {
+                    // Extract filename from the full path
+                    const urlParts = stylesheet.href.split('/');
+                    source = urlParts[urlParts.length - 1];
+                } else if (stylesheet.ownerNode && (stylesheet.ownerNode as HTMLElement).tagName === 'STYLE') {
+                    source = 'style tag';
+                }
+                
+                stylesheetHeader.textContent = source;
+                stylesheetContainer.appendChild(stylesheetHeader);
+                
+                // Process each rule in the stylesheet
+                cssRules.forEach(rule => {
+                    if (rule instanceof CSSStyleRule) {
+                        // Check if this rule applies to our element
+                        try {
+                            if (element.matches(rule.selectorText)) {
+                                foundRules = true;
+                                foundInStylesheet = true;
+                                
+                                // Create rule container
+                                const ruleContainer = document.createElement('div');
+                                ruleContainer.className = 'rule-container';
+                                
+                                // Add selector
+                                const selector = document.createElement('div');
+                                selector.className = 'rule-selector';
+                                selector.textContent = rule.selectorText;
+                                ruleContainer.appendChild(selector);
+                                
+                                // Add declarations
+                                const declarations = document.createElement('div');
+                                declarations.className = 'rule-declarations';
+                                
+                                // Get all style declarations
+                                const style = rule.style;
+                                for (let i = 0; i < style.length; i++) {
+                                    const propertyName = style[i];
+                                    const propertyValue = style.getPropertyValue(propertyName);
+                                    
+                                    const declaration = document.createElement('div');
+                                    declaration.className = 'declaration';
+                                    
+                                    const propName = document.createElement('span');
+                                    propName.className = 'declaration-name';
+                                    propName.textContent = propertyName;
+                                    
+                                    const propValue = document.createElement('span');
+                                    propValue.className = 'declaration-value';
+                                    propValue.textContent = propertyValue;
+                                    
+                                    declaration.appendChild(propName);
+                                    declaration.appendChild(document.createTextNode(': '));
+                                    declaration.appendChild(propValue);
+                                    declaration.appendChild(document.createTextNode(';'));
+                                    
+                                    declarations.appendChild(declaration);
+                                }
+                                
+                                ruleContainer.appendChild(declarations);
+                                stylesheetContainer.appendChild(ruleContainer);
+                            }
+                        } catch (e) {
+                            // Some selectors might cause errors when checking matches
+                            // Just skip those
+                            console.warn('Error checking selector:', rule.selectorText, e);
+                        }
+                    }
+                });
+                
+                // Only add this stylesheet container if we found matching rules
+                if (foundInStylesheet) {
+                    rulesContainer.appendChild(stylesheetContainer);
+                }
+            } catch (e) {
+                // Skip stylesheets that can't be accessed due to CORS
+                console.warn('Could not access stylesheet:', e);
+            }
+        });
+        
+        // Add element inline styles if any exist
+        if (element.style && element.style.length > 0) {
+            foundRules = true;
+            
+            const inlineContainer = document.createElement('div');
+            inlineContainer.className = 'stylesheet-container';
+            
+            const inlineHeader = document.createElement('div');
+            inlineHeader.className = 'stylesheet-header';
+            inlineHeader.textContent = 'element.style';
+            inlineContainer.appendChild(inlineHeader);
+            
+            const ruleContainer = document.createElement('div');
+            ruleContainer.className = 'rule-container';
+            
+            const declarations = document.createElement('div');
+            declarations.className = 'rule-declarations';
+            
+            for (let i = 0; i < element.style.length; i++) {
+                const propertyName = element.style[i];
+                const propertyValue = element.style.getPropertyValue(propertyName);
+                
+                const declaration = document.createElement('div');
+                declaration.className = 'declaration';
+                
+                const propName = document.createElement('span');
+                propName.className = 'declaration-name';
+                propName.textContent = propertyName;
+                
+                const propValue = document.createElement('span');
+                propValue.className = 'declaration-value';
+                propValue.textContent = propertyValue;
+                
+                declaration.appendChild(propName);
+                declaration.appendChild(document.createTextNode(': '));
+                declaration.appendChild(propValue);
+                declaration.appendChild(document.createTextNode(';'));
+                
+                declarations.appendChild(declaration);
+            }
+            
+            ruleContainer.appendChild(declarations);
+            inlineContainer.appendChild(ruleContainer);
+            rulesContainer.insertBefore(inlineContainer, rulesContainer.firstChild);
+        }
+        
+        // If no rules were found, show a message
+        if (!foundRules) {
+            const noRules = document.createElement('div');
+            noRules.className = 'no-rules';
+            noRules.textContent = 'No CSS rules found for this element.';
+            rulesContainer.appendChild(noRules);
+        }
+        
+        // Add the rules container to the stylesheets tab
+        if (this.stylesheetsContainer) {
+            this.stylesheetsContainer.appendChild(rulesContainer);
+        }
     }
     
     private clearInspector(): void {
         // Clear all property lists
         Object.values(this.categoryElements).forEach(element => {
-            element.innerHTML = '';
+            if (element) {
+                element.innerHTML = '';
+            }
         });
         
         // Clear the canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
     
-    private drawBoxModel(element: HTMLElement, style: CSSStyleDeclaration): void {
-        // Parse dimensions - ensure we have valid numbers
-        const width = parseInt(style.getPropertyValue('width')) || 0;
-        const height = parseInt(style.getPropertyValue('height')) || 0;
-        
-        // Parse padding - ensure we have valid numbers
-        const paddingTop = parseInt(style.getPropertyValue('padding-top')) || 0;
-        const paddingRight = parseInt(style.getPropertyValue('padding-right')) || 0;
-        const paddingBottom = parseInt(style.getPropertyValue('padding-bottom')) || 0;
-        const paddingLeft = parseInt(style.getPropertyValue('padding-left')) || 0;
-        
-        // Parse margins - ensure we have valid numbers
-        const marginTop = parseInt(style.getPropertyValue('margin-top')) || 0;
-        const marginRight = parseInt(style.getPropertyValue('margin-right')) || 0;
-        const marginBottom = parseInt(style.getPropertyValue('margin-bottom')) || 0;
-        const marginLeft = parseInt(style.getPropertyValue('margin-left')) || 0;
-        
-        // Parse borders - ensure we have valid numbers
-        const borderTopWidth = parseInt(style.getPropertyValue('border-top-width')) || 0;
-        const borderRightWidth = parseInt(style.getPropertyValue('border-right-width')) || 0;
-        const borderBottomWidth = parseInt(style.getPropertyValue('border-bottom-width')) || 0;
-        const borderLeftWidth = parseInt(style.getPropertyValue('border-left-width')) || 0;
-        
-        // Calculate canvas dimensions
+    private drawBoxModel(element: HTMLElement, computedStyle: CSSStyleDeclaration): void {
+        // Get the canvas dimensions
         const canvasWidth = this.canvas.width;
         const canvasHeight = this.canvas.height;
         
-        // Center point
-        const centerX = canvasWidth / 2;
-        const centerY = canvasHeight / 2;
-        
-        // Clear the canvas first
+        // Clear the canvas
         this.ctx.clearRect(0, 0, canvasWidth, canvasHeight);
         
-        // Draw a background grid for reference
+        // Draw background grid
         this.drawGrid(canvasWidth, canvasHeight);
         
         // Define standard spacing between boxes (same on all sides)
-        const boxSpacing = Math.min(canvasWidth, canvasHeight) * 0.075; // 5% of the smaller canvas dimension
+        const boxSpacing = Math.min(canvasWidth, canvasHeight) * 0.075; // 7.5% of the smaller canvas dimension
         
         // Start with content box dimensions
         const contentBoxWidth = Math.min(canvasWidth, canvasHeight) * 0.85;
-        const contentBoxHeight = Math.min(canvasWidth, canvasHeight) * 0.45;
+        const contentBoxHeight = contentBoxWidth * 0.6; // 3:2 aspect ratio
         
-        // Calculate other box dimensions by adding consistent spacing on all sides
-        const paddingBoxWidth = contentBoxWidth + (boxSpacing * 4);
-        const paddingBoxHeight = contentBoxHeight + (boxSpacing * 2);
+        // Calculate center position
+        const centerX = canvasWidth / 2;
+        const centerY = canvasHeight / 2;
         
-        const borderBoxWidth = paddingBoxWidth + (boxSpacing * 4);
-        const borderBoxHeight = paddingBoxHeight + (boxSpacing * 2);
+        // Calculate positions for each box
+        const contentX = centerX - contentBoxWidth / 2;
+        const contentY = centerY - contentBoxHeight / 2;
         
-        const marginBoxWidth = borderBoxWidth + (boxSpacing * 4);
-        const marginBoxHeight = borderBoxHeight + (boxSpacing * 2);
+        // Parse box model values
+        const padding = {
+            top: parseFloat(computedStyle.getPropertyValue('padding-top')),
+            right: parseFloat(computedStyle.getPropertyValue('padding-right')),
+            bottom: parseFloat(computedStyle.getPropertyValue('padding-bottom')),
+            left: parseFloat(computedStyle.getPropertyValue('padding-left'))
+        };
         
-        // Draw margin box (light gray)
-        this.ctx.fillStyle = 'rgba(211, 211, 211, 0.5)';
-        this.ctx.fillRect(
-            centerX - marginBoxWidth / 2,
-            centerY - marginBoxHeight / 2,
-            marginBoxWidth,
-            marginBoxHeight
+        const border = {
+            top: parseFloat(computedStyle.getPropertyValue('border-top-width')),
+            right: parseFloat(computedStyle.getPropertyValue('border-right-width')),
+            bottom: parseFloat(computedStyle.getPropertyValue('border-bottom-width')),
+            left: parseFloat(computedStyle.getPropertyValue('border-left-width'))
+        };
+        
+        const margin = {
+            top: parseFloat(computedStyle.getPropertyValue('margin-top')),
+            right: parseFloat(computedStyle.getPropertyValue('margin-right')),
+            bottom: parseFloat(computedStyle.getPropertyValue('margin-bottom')),
+            left: parseFloat(computedStyle.getPropertyValue('margin-left'))
+        };
+        
+        // Normalize values (make them proportional to the canvas)
+        const maxValue = Math.max(
+            padding.top, padding.right, padding.bottom, padding.left,
+            border.top, border.right, border.bottom, border.left,
+            margin.top, margin.right, margin.bottom, margin.left
         );
         
-        // Draw margin values
-        this.drawBoxValue(marginTop, centerX, centerY - borderBoxHeight / 2 - boxSpacing / 2);
-        this.drawBoxValue(marginRight, centerX + borderBoxWidth / 2 + boxSpacing / 4, centerY);
-        this.drawBoxValue(marginBottom, centerX, centerY + borderBoxHeight / 2 + boxSpacing / 2);
-        this.drawBoxValue(marginLeft, centerX - borderBoxWidth / 2 - boxSpacing / 4, centerY);
+        // If we have valid measurements, use them proportionally
+        // Otherwise use default spacing
+        const scaleFactor = maxValue > 0 ? boxSpacing / maxValue : 1;
         
-        // Draw border box (dark gray)
-        this.ctx.fillStyle = 'rgba(169, 169, 169, 0.7)';
+        const scaledPadding = {
+            top: Math.max(padding.top * scaleFactor, boxSpacing / 3),
+            right: Math.max(padding.right * scaleFactor, boxSpacing / 3),
+            bottom: Math.max(padding.bottom * scaleFactor, boxSpacing / 3),
+            left: Math.max(padding.left * scaleFactor, boxSpacing / 3)
+        };
+        
+        const scaledBorder = {
+            top: Math.max(border.top * scaleFactor, boxSpacing / 6),
+            right: Math.max(border.right * scaleFactor, boxSpacing / 6),
+            bottom: Math.max(border.bottom * scaleFactor, boxSpacing / 6),
+            left: Math.max(border.left * scaleFactor, boxSpacing / 6)
+        };
+        
+        const scaledMargin = {
+            top: Math.max(margin.top * scaleFactor, boxSpacing / 2),
+            right: Math.max(margin.right * scaleFactor, boxSpacing / 2),
+            bottom: Math.max(margin.bottom * scaleFactor, boxSpacing / 2),
+            left: Math.max(margin.left * scaleFactor, boxSpacing / 2)
+        };
+        
+        // Draw margin box (outermost)
+        this.ctx.fillStyle = 'rgba(246, 178, 107, 0.3)';
         this.ctx.fillRect(
-            centerX - borderBoxWidth / 2,
-            centerY - borderBoxHeight / 2,
-            borderBoxWidth,
-            borderBoxHeight
+            contentX - scaledPadding.left - scaledBorder.left - scaledMargin.left,
+            contentY - scaledPadding.top - scaledBorder.top - scaledMargin.top,
+            contentBoxWidth + scaledPadding.left + scaledPadding.right + scaledBorder.left + scaledBorder.right + scaledMargin.left + scaledMargin.right,
+            contentBoxHeight + scaledPadding.top + scaledPadding.bottom + scaledBorder.top + scaledBorder.bottom + scaledMargin.top + scaledMargin.bottom
         );
         
-        // Draw border values
-        this.drawBoxValue(borderTopWidth, centerX, centerY - paddingBoxHeight / 2 - boxSpacing / 2);
-        this.drawBoxValue(borderRightWidth, centerX + paddingBoxWidth / 2 + boxSpacing / 2, centerY);
-        this.drawBoxValue(borderBottomWidth, centerX, centerY + paddingBoxHeight / 2 + boxSpacing / 2);
-        this.drawBoxValue(borderLeftWidth, centerX - paddingBoxWidth / 2 - boxSpacing / 2, centerY);
-        
-        // Draw padding box (light blue)
-        this.ctx.fillStyle = 'rgba(173, 216, 230, 0.7)';
+        // Draw border box
+        this.ctx.fillStyle = 'rgba(222, 125, 44, 0.5)';
         this.ctx.fillRect(
-            centerX - paddingBoxWidth / 2,
-            centerY - paddingBoxHeight / 2,
-            paddingBoxWidth,
-            paddingBoxHeight
+            contentX - scaledPadding.left - scaledBorder.left,
+            contentY - scaledPadding.top - scaledBorder.top,
+            contentBoxWidth + scaledPadding.left + scaledPadding.right + scaledBorder.left + scaledBorder.right,
+            contentBoxHeight + scaledPadding.top + scaledPadding.bottom + scaledBorder.top + scaledBorder.bottom
         );
         
-        // Draw padding values
-        this.drawBoxValue(paddingTop, centerX, centerY - contentBoxHeight / 2 - boxSpacing / 2);
-        this.drawBoxValue(paddingRight, centerX + contentBoxWidth / 2 + boxSpacing / 2, centerY);
-        this.drawBoxValue(paddingBottom, centerX, centerY + contentBoxHeight / 2 + boxSpacing / 2);
-        this.drawBoxValue(paddingLeft, centerX - contentBoxWidth / 2 - boxSpacing / 2, centerY);
-        
-        // Draw content box (white)
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        // Draw padding box
+        this.ctx.fillStyle = 'rgba(173, 216, 230, 0.5)';
         this.ctx.fillRect(
-            centerX - contentBoxWidth / 2,
-            centerY - contentBoxHeight / 2,
+            contentX - scaledPadding.left,
+            contentY - scaledPadding.top,
+            contentBoxWidth + scaledPadding.left + scaledPadding.right,
+            contentBoxHeight + scaledPadding.top + scaledPadding.bottom
+        );
+        
+        // Draw content box (innermost)
+        this.ctx.fillStyle = 'rgba(135, 206, 235, 0.7)';
+        this.ctx.fillRect(
+            contentX,
+            contentY,
             contentBoxWidth,
             contentBoxHeight
         );
         
-        // Add content dimensions in the center
-        this.ctx.fillStyle = '#000';
-        this.ctx.font = '16px Arial';
+        // Add labels
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = '12px Arial';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText(
-            `${width} × ${height}px`,
-            centerX,
-            centerY
+        
+        // Content label
+        this.ctx.fillText('Content', centerX, centerY);
+        
+        // Padding label
+        this.ctx.fillText('Padding', centerX, contentY - scaledPadding.top / 2);
+        
+        // Border label
+        this.ctx.fillText('Border', centerX, contentY - scaledPadding.top - scaledBorder.top / 2);
+        
+        // Margin label
+        this.ctx.fillText('Margin', centerX, contentY - scaledPadding.top - scaledBorder.top - scaledMargin.top / 2);
+        
+        // Add measurements
+        this.ctx.font = '10px Arial';
+        
+        // Content measurements
+        const contentWidth = Math.round(parseFloat(computedStyle.getPropertyValue('width')));
+        const contentHeight = Math.round(parseFloat(computedStyle.getPropertyValue('height')));
+        this.ctx.fillText(`${contentWidth}px × ${contentHeight}px`, centerX, centerY + 15);
+        
+        // Draw dimension lines
+        this.drawDimensionLine(
+            contentX - 10,
+            contentY,
+            contentX - 10,
+            contentY + contentBoxHeight,
+            `${contentHeight}px`
+        );
+        
+        this.drawDimensionLine(
+            contentX,
+            contentY + contentBoxHeight + 10,
+            contentX + contentBoxWidth,
+            contentY + contentBoxHeight + 10,
+            `${contentWidth}px`
         );
     }
     
-    private drawBoxValue(value: number, x: number, y: number): void {
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        this.ctx.font = '12px Arial';
+    private drawDimensionLine(x1: number, y1: number, x2: number, y2: number, label: string): void {
+        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        this.ctx.lineWidth = 1;
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(x1, y1);
+        this.ctx.lineTo(x2, y2);
+        this.ctx.stroke();
+        
+        this.ctx.font = '10px Arial';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText(`${value}px`, x, y);
+        this.ctx.fillStyle = 'black';
+        this.ctx.fillText(label, (x1 + x2) / 2, (y1 + y2) / 2);
     }
     
     private drawGrid(width: number, height: number): void {
