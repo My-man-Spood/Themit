@@ -5,17 +5,20 @@ import { Bus } from './Bus';
 import { TH_DOCUMENT_LOADED, TH_PROJECT_LOADED, TH_READ_FILE_REQUEST } from './Actions';
 import { FileBrowser } from './FileBrowser';
 import { THProject } from '../lib/THProject';
+import { Inspector } from './Inspector';
 
 export class Editor {
     private file: FileHolder;
     private hierarchy: Hierarchy;
     private fileBrowser: FileBrowser;
+    private inspector: Inspector;
     private thProject: THProject;
     private bus: Bus;
 
     constructor() {
         this.bus = new Bus();
         this.hierarchy = new Hierarchy(this.bus);
+        this.inspector = new Inspector(this.bus);
         this.fileBrowser = new FileBrowser(this.bus, {
             readDir: (path: string) => window['electron'].readDirectory(path),
         });
@@ -36,7 +39,7 @@ export class Editor {
             this.file = new FileHolder(val);
             this.bus.push(TH_DOCUMENT_LOADED, this.file);
 
-            document.getElementById('viewport').innerHTML = this.file.asHTML();
+            document.getElementById('viewport')!.innerHTML = this.file.asHTML();
         });
     }
 }

@@ -1,7 +1,7 @@
 import { Parser } from 'htmlparser2';
 import { Bus } from './Bus';
 import { FileHolder } from './entities/FileHolder';
-import { TH_DOCUMENT_LOADED } from './Actions';
+import { TH_DOCUMENT_LOADED, TH_NODE_SELECTED } from './Actions';
 
 export class Hierarchy {
     private element: HTMLElement;
@@ -70,6 +70,37 @@ export class Hierarchy {
         parser.end();
 
         this.element.innerHTML = html;
+        this.addNodeSelectionListeners();
+    }
+
+    private addNodeSelectionListeners(): void {
+        const nodeNames = this.element.querySelectorAll('.node-name');
+        nodeNames.forEach(nodeName => {
+            nodeName.addEventListener('click', (event) => {
+                // Remove selected class from all nodes
+                this.element.querySelectorAll('.node-name.selected').forEach(node => {
+                    node.classList.remove('selected');
+                });
+                
+                // Add selected class to current node
+                const target = event.currentTarget as HTMLElement;
+                target.classList.add('selected');
+                
+                // Get the data-th attribute value
+                const thid = target.getAttribute('data-th');
+                
+                // Find the corresponding element in the viewport
+                const viewportElement = document.querySelector(`[data-th="${thid}"]`);
+                
+                if (viewportElement) {
+                    // Emit node selected event
+                    this.bus.push(TH_NODE_SELECTED, {
+                        element: viewportElement,
+                        thid: thid
+                    });
+                }
+            });
+        });
     }
 
     private parseId(idString: string): string {

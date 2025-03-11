@@ -7,6 +7,7 @@
 
         .node-name {
             margin: 0;
+            padding-left: 2px;
 
             &:hover {
                 cursor: pointer;
@@ -27,6 +28,7 @@
         .node-children {
             list-style: none;
             margin: 0;
+            margin-top: 3px;
             padding-left: 10px;
             border-left: 2px solid #424242;
         }
