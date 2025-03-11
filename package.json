@@ -19,7 +19,7 @@
     "dependencies": {
         "cheerio": "^1.0.0-rc.12",
         "css-loader": "^6.8.1",
-        "electron": "^27.1.0",
+        "electron": "^35.0.1",
         "htmlparser2": "^9.0.0",
         "rxjs": "^7.8.1",
         "style-loader": "^3.3.3"

@@ -1,159 +1,162 @@
 // Inspector.scss
-#inspector-content {
+#inspector {
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    overflow: hidden;
     height: 100%;
-    padding: 10px;
 
+    // Tab Navigation
     .tabs {
         display: flex;
-        margin-bottom: 15px;
-        border-bottom: 1px solid #424242;
+        border-bottom: 1px solid #333;
+        margin-bottom: 10px;
 
         .tab-item {
-            padding: 8px 16px;
+            padding: 5px 15px;
             cursor: pointer;
-            color: #a0a0a0;
-            font-size: 14px;
             border-bottom: 2px solid transparent;
-            transition: all 0.2s ease;
-
-            &:hover {
-                color: #e0e0e0;
-            }
-
+            
             &.active {
-                color: #e0e0e0;
                 border-bottom: 2px solid #0078d7;
+                color: #0078d7;
             }
         }
     }
 
+    // Tab Content
     .tab-content {
         display: none;
         flex-direction: column;
         height: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-gutter: stable;
 
         &.active {
             display: flex;
         }
     }
 
-    .smiley-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 200px;
+    // Box Model Visualization
+    .box-model-section {
+        margin-bottom: 20px;
 
-        .smiley {
-            font-size: 80px;
+        h3 {
+            margin: 5px 0;
+            font-size: 16px;
             color: #e0e0e0;
+            margin-bottom: 10px;
+        }
+
+        .box-model-canvas {
+            width: 100%;
+            height: 200px;
+            background-color: #1e1e1e;
+            border: 1px solid #333;
         }
     }
 
-    // Stylesheet rules styling
-    .stylesheet-rules {
-        height: 100%;
-        overflow-y: auto;
-        font-family: monospace;
-        font-size: 12px;
-        
-        .rules-container {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        
-        .stylesheet-container {
-            border: 1px solid #424242;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        
-        .stylesheet-header {
-            background-color: #333;
+    // CSS Property Categories
+    .css-category {
+        margin-bottom: 20px;
+
+        h4 {
+            margin: 5px 0;
+            font-size: 16px;
             color: #e0e0e0;
-            padding: 6px 10px;
-            font-weight: bold;
-            font-size: 11px;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #333;
         }
-        
-        .rule-container {
-            padding: 8px;
+
+        .property-list {
+            padding-left: 10px;
         }
-        
-        .rule-selector {
-            color: #9cdcfe;
-            margin-bottom: 4px;
-        }
-        
-        .rule-declarations {
-            padding-left: 16px;
+
+        .property-item {
             display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        
-        .declaration {
-            color: #d4d4d4;
-            
-            .declaration-name {
+            margin: 3px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #2a2a2a;
+
+            .property-name {
                 color: #9cdcfe;
+                margin-right: 5px;
+                min-width: 100px;
             }
-            
-            .declaration-value {
+
+            .property-value {
                 color: #ce9178;
             }
         }
-        
-        .no-rules {
-            color: #a0a0a0;
-            text-align: center;
-            padding: 20px;
+    }
+
+    // Stylesheet Rules
+    .stylesheet-rules {
+        height: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        .rules-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
-    }
 
-    #inspector-canvas {
-        width: 100%;
-        height: 200px;
-        margin-bottom: 15px;
-    }
+        .rule-source {
+            font-size: 13px;
+            color: #e0e0e0;
+            padding: 5px 10px;
+            background-color: #2d2d2d;
+            border-radius: 3px;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
 
-    .css-properties {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
+        .rule-container {
+            padding: 0 12px;
+            margin: 10px 0;
+            word-break: break-word;
 
-        .css-category {
-            h4 {
-                margin: 0 0 8px 0;
-                padding-bottom: 4px;
-                border-bottom: 1px solid #424242;
-                color: #e0e0e0;
+            .rule-selector {
+                color: #d7ba7d;
+                margin-bottom: 5px;
             }
 
-            .property-list {
-                display: flex;
-                flex-direction: column;
-                gap: 4px;
+            .rule-declarations {
+                padding-left: 15px;
 
-                .property-item {
-                    display: flex;
-                    font-family: monospace;
-                    font-size: 12px;
+                .declaration {
+                    margin: 3px 0;
+                    color: #d4d4d4;
+                    word-break: break-word;
 
-                    .property-name {
+                    .declaration-name {
                         color: #9cdcfe;
-                        margin-right: 5px;
-                        min-width: 120px;
                     }
 
-                    .property-value {
+                    .declaration-value {
                         color: #ce9178;
                     }
                 }
             }
+        }
+
+        .no-rules {
+            padding: 20px;
+            text-align: center;
+            color: #888;
+            font-style: italic;
+        }
+
+        .error-message {
+            padding: 10px;
+            margin: 10px 0;
+            background-color: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            border-radius: 3px;
+            color: #ff6b6b;
         }
     }
 }

@@ -9,6 +9,7 @@ body {
     font-size: 18px;
     line-height: 1.5;
     color: white;
+    
 
     #toolbar {
         height: 35px;
@@ -67,6 +68,9 @@ body {
         display: flex;
         flex-direction: row;
         height: calc(100% - 35px);
+        scrollbar-width: thin;
+        scrollbar-color: #555 #212121;
+        scrollbar-gutter: stable both-edges;
 
         .left {
             height: 100%;
@@ -104,10 +108,6 @@ body {
         .right {
             height: 100%;
             width: 20%;
-
-            #inspector {
-                height: 100%;
-            }
         }
     }
 }
@@ -135,7 +135,7 @@ body {
         flex: 1;
         padding: 10px;
         padding-top: 5px;
-        overflow-y: auto;
+        overflow: hidden;
         background-color: $th-bg;
     }
 }
