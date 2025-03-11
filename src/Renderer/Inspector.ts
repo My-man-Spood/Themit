@@ -9,12 +9,22 @@ export class Inspector {
     private selectedElement: HTMLElement | null = null;
     private cssPropertiesContainer: HTMLElement;
     private categoryElements: { [key: string]: HTMLElement } = {};
+    private tabsContainer: HTMLElement;
+    private tabContents: { [key: string]: HTMLElement } = {};
+    private activeTab: string = 'stylesheets';
 
     constructor(private bus: Bus) {
         this.element = document.getElementById('inspector-content')!;
         this.canvas = document.getElementById('inspector-canvas') as HTMLCanvasElement;
         this.ctx = this.canvas.getContext('2d')!;
         this.cssPropertiesContainer = document.getElementById('css-properties')!;
+        this.tabsContainer = document.getElementById('inspector-tabs')!;
+        
+        // Initialize tab contents
+        this.tabContents = {
+            'stylesheets': document.getElementById('stylesheets-tab')!,
+            'computed': document.getElementById('computed-tab')!
+        };
         
         // Initialize category elements
         this.categoryElements = {
@@ -26,6 +36,9 @@ export class Inspector {
             'Flexbox': document.getElementById('flexbox-properties')!
         };
         
+        // Set up tab click handlers
+        this.setupTabHandlers();
+        
         // Set canvas size to match container
         this.resizeCanvas();
         window.addEventListener('resize', () => this.resizeCanvas());
@@ -35,6 +48,44 @@ export class Inspector {
             this.selectedElement = action.payload.element;
             this.displayCSSInfo(this.selectedElement!);
         });
+    }
+    
+    private setupTabHandlers(): void {
+        const tabItems = this.tabsContainer.querySelectorAll('.tab-item');
+        
+        tabItems.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Get the tab name from data attribute
+                const tabName = tab.getAttribute('data-tab')!;
+                
+                // Switch to the selected tab
+                this.switchTab(tabName);
+            });
+        });
+    }
+    
+    private switchTab(tabName: string): void {
+        // Update active tab
+        this.activeTab = tabName;
+        
+        // Remove active class from all tabs and tab contents
+        const tabItems = this.tabsContainer.querySelectorAll('.tab-item');
+        tabItems.forEach(tab => tab.classList.remove('active'));
+        
+        Object.values(this.tabContents).forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        // Add active class to selected tab and content
+        const selectedTab = this.tabsContainer.querySelector(`[data-tab="${tabName}"]`);
+        selectedTab?.classList.add('active');
+        
+        this.tabContents[tabName].classList.add('active');
+        
+        // If switching to the computed tab and we have a selected element, redraw
+        if (tabName === 'computed' && this.selectedElement) {
+            this.resizeCanvas();
+        }
     }
     
     private resizeCanvas(): void {
@@ -149,20 +200,20 @@ export class Inspector {
         this.drawGrid(canvasWidth, canvasHeight);
         
         // Define standard spacing between boxes (same on all sides)
-        const boxSpacing = Math.min(canvasWidth, canvasHeight) * 0.75; // 7.5% of the smaller canvas dimension
+        const boxSpacing = Math.min(canvasWidth, canvasHeight) * 0.075; // 5% of the smaller canvas dimension
         
         // Start with content box dimensions
-        const contentBoxWidth = Math.min(canvasWidth, canvasHeight) * 0.6;
+        const contentBoxWidth = Math.min(canvasWidth, canvasHeight) * 0.85;
         const contentBoxHeight = Math.min(canvasWidth, canvasHeight) * 0.45;
         
         // Calculate other box dimensions by adding consistent spacing on all sides
-        const paddingBoxWidth = contentBoxWidth + (boxSpacing * 2);
+        const paddingBoxWidth = contentBoxWidth + (boxSpacing * 4);
         const paddingBoxHeight = contentBoxHeight + (boxSpacing * 2);
         
-        const borderBoxWidth = paddingBoxWidth + (boxSpacing * 2);
+        const borderBoxWidth = paddingBoxWidth + (boxSpacing * 4);
         const borderBoxHeight = paddingBoxHeight + (boxSpacing * 2);
         
-        const marginBoxWidth = borderBoxWidth + (boxSpacing * 2);
+        const marginBoxWidth = borderBoxWidth + (boxSpacing * 4);
         const marginBoxHeight = borderBoxHeight + (boxSpacing * 2);
         
         // Draw margin box (light gray)
@@ -176,9 +227,9 @@ export class Inspector {
         
         // Draw margin values
         this.drawBoxValue(marginTop, centerX, centerY - borderBoxHeight / 2 - boxSpacing / 2);
-        this.drawBoxValue(marginRight, centerX + borderBoxWidth / 2 + boxSpacing / 2, centerY);
+        this.drawBoxValue(marginRight, centerX + borderBoxWidth / 2 + boxSpacing / 4, centerY);
         this.drawBoxValue(marginBottom, centerX, centerY + borderBoxHeight / 2 + boxSpacing / 2);
-        this.drawBoxValue(marginLeft, centerX - borderBoxWidth / 2 - boxSpacing / 2, centerY);
+        this.drawBoxValue(marginLeft, centerX - borderBoxWidth / 2 - boxSpacing / 4, centerY);
         
         // Draw border box (dark gray)
         this.ctx.fillStyle = 'rgba(169, 169, 169, 0.7)';
