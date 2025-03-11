@@ -1,3 +1,4 @@
-export class THProject {
-    public rootDir: string = '';
+export interface THProject {
+    rootDir: string;
+    componentPrefix: string;
 }

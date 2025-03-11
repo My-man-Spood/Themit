@@ -1,12 +1,7 @@
-import { Component } from '../../lib/@themit/common/ComponentDecorator';
+import { ThemitApp } from '../../lib/@themit/engine/ThemitApp';
 
-console.log('hello themit');
-
-@Component
-export class AppComponent {
-    constructor(public name: string) {
-        console.log('App component named: ' + name);
+export class App extends ThemitApp {
+    constructor() {
+        super();
     }
 }
-
-let swag = new AppComponent('swag');

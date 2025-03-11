@@ -1,0 +1,14 @@
+{
+  "name": "themit",
+  "version": "1.0.0",
+  "description": "themit framework",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "tsyringe": "^4.8.0"
+  }
+}

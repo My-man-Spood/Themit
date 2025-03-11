@@ -12,7 +12,7 @@ export const WebpackBuildConfig = (
 
     return {
         name: 'Project',
-        entry: path.join(projectSrc, 'app.ts'),
+        entry: path.join(projectSrc, './main.ts'),
         mode: env,
         devtool: env == 'development' ? 'inline-source-map' : 'none',
         module: {

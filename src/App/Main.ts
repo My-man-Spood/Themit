@@ -134,7 +134,7 @@ export default class Main {
                     reject(err);
                 } else {
                     //TODO: Parse project settings quand yaura des settings
-                    const proj = new THProject();
+                    const proj = {} as THProject;
                     proj.rootDir = path.join(__dirname, Main.projectDir);
 
                     resolve(proj);

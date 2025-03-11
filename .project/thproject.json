@@ -1,0 +1,4 @@
+{
+    "componentPrefix": "th",
+    "main": "./main.ts"
+}
