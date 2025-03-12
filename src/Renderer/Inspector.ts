@@ -243,4 +243,15 @@ export class Inspector {
             this.stylesheetsTabInstance.clear();
         }
     }
+    
+    /**
+     * Public method to inspect an element from external sources (like iframe)
+     * @param element The HTML element to inspect
+     */
+    public inspectElement(element: HTMLElement): void {
+        if (element) {
+            this.selectedElement = element;
+            this.displayElementInfo(element);
+        }
+    }
 }
