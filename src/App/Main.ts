@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { WebpackBuildConfig } from './webpackbuildconf';
 import { DevServer } from './DevServer';
+import { ASTManager } from './AST/ASTManager';
 
 export default class Main {
     static mainWindow: Electron.BrowserWindow;
@@ -15,6 +16,7 @@ export default class Main {
     static projectRoot = '../../.project';
     static projectSrc = '../../.project/src';
     static devServer: DevServer | null = null;
+    static astManager: ASTManager;
 
     static main(app: Electron.App, browserWindow: typeof BrowserWindow) {
         // we pass the Electron.App object and the
@@ -93,6 +95,9 @@ export default class Main {
     }
 
     private static onReady() {
+        // Initialize AST Manager
+        Main.astManager = new ASTManager();
+        
         ipcMain.handle('loadDocument', (event, path) => {
             return Main.ReadFile(path);
         });
@@ -123,6 +128,41 @@ export default class Main {
                 running: Main.devServer?.isServerRunning() || false,
                 url: Main.devServer?.getServerUrl() || ''
             };
+        });
+        
+        // Register AST API handlers
+        ipcMain.handle('ast:parseHTMLFile', async (event, filePath) => {
+            // Unabstract the path (convert src:// to actual filesystem path)
+            const realPath = Main.unabstractPath(filePath);
+            console.log('Parsing HTML file:', filePath, '→', realPath);
+            return Main.astManager.parseHTMLFile(realPath);
+        });
+        
+        ipcMain.handle('ast:getHTMLHierarchy', (event, astId) => {
+            return Main.astManager.getHTMLHierarchy(astId);
+        });
+        
+        ipcMain.handle('ast:updateHTMLAttribute', (event, astId, nodeId, attrName, attrValue) => {
+            return Main.astManager.updateHTMLAttribute(astId, nodeId, attrName, attrValue);
+        });
+        
+        ipcMain.handle('ast:saveHTMLFile', (event, astId) => {
+            return Main.astManager.saveHTMLFile(astId);
+        });
+        
+        ipcMain.handle('ast:parseCSSFile', async (event, filePath) => {
+            // Unabstract the path (convert src:// to actual filesystem path)
+            const realPath = Main.unabstractPath(filePath);
+            console.log('Parsing CSS file:', filePath, '→', realPath);
+            return Main.astManager.parseCSSFile(realPath);
+        });
+        
+        ipcMain.handle('ast:updateCSSProperty', (event, astId, ruleId, propName, propValue) => {
+            return Main.astManager.updateCSSProperty(astId, ruleId, propName, propValue);
+        });
+        
+        ipcMain.handle('ast:saveCSSFile', (event, astId) => {
+            return Main.astManager.saveCSSFile(astId);
         });
 
         Main.mainWindow = new Main.BrowserWindow({
